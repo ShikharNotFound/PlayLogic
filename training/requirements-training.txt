@@ -1,0 +1,7 @@
+trl>=0.25.0
+transformers>=4.56.0
+datasets
+accelerate
+peft
+matplotlib
+huggingface_hub

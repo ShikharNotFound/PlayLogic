@@ -1,0 +1,13 @@
+name: MultiAgentFootball
+version: 0.1.0
+description: 22-agent football simulation with GRPO training
+author: Your Team
+python: "3.10"
+entrypoint: server.app:app
+requirements:
+  - numpy
+  - fastapi
+  - uvicorn
+  - pydantic
+  - matplotlib
+  - pillow

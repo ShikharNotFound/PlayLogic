@@ -1,0 +1,17 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "playlogic"
+version = "0.1.0"
+description = "Football tactical MARL environment"
+requires-python = ">=3.10"
+dependencies = [
+    "numpy",
+    "networkx",
+    "scipy",
+    "fastapi",
+    "uvicorn",
+    "openenv"
+]

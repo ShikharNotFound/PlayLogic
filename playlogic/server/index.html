@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Multi‑Agent Football</title>
+    <style>
+        body { margin:0; background:#1a1a1a; display:flex; justify-content:center; align-items:center; height:100vh; }
+        canvas { border:2px solid #fff; }
+    </style>
+</head>
+<body>
+    <div style="position:absolute;top:10px;left:10px;color:white;font-family:monospace;z-index:10;" id="info">Steps: 0</div>
+    <canvas id="field" width="1050" height="680"></canvas>
+    <script>
+        const FIELD_W = 105, FIELD_H = 68;
+        const scaleX = 1050/FIELD_W, scaleY = 680/FIELD_H;
+        const ctx = document.getElementById("field").getContext("2d");
+        let totalSteps = 0;
+        const infoDiv = document.getElementById("info");
+
+        async function reset() {
+            const res = await fetch('/reset', {method:'POST'});
+            return await res.json();
+        }
+
+        async function step(actions) {
+            const res = await fetch('/step', {
+                method:'POST',
+                headers: {'Content-Type':'application/json'},
+                body: JSON.stringify({action: JSON.stringify(actions)})
+            });
+            return await res.json();
+        }
+
+        function draw(state) {
+            ctx.clearRect(0,0,1050,680);
+            ctx.fillStyle = '#2e8b57';
+            ctx.fillRect(0,0,1050,680);
+            ctx.strokeStyle = '#fff';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(0,0,1050,680);
+            ctx.beginPath(); ctx.arc(525, 340, 9.15*scaleX, 0, 2*Math.PI); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(525, 0); ctx.lineTo(525, 680); ctx.stroke();
+            ctx.strokeRect(0, 340-20*scaleY, 16.5*scaleX, 40*scaleY);
+            ctx.strokeRect(1050-16.5*scaleX, 340-20*scaleY, 16.5*scaleX, 40*scaleY);
+            ctx.strokeRect(0, 340-6*scaleY, 5.5*scaleX, 12*scaleY);
+            ctx.strokeRect(1050-5.5*scaleX, 340-6*scaleY, 5.5*scaleX, 12*scaleY);
+
+            state.players.forEach(p => {
+                const x = p.pos[0]*scaleX, y = p.pos[1]*scaleY;
+                ctx.fillStyle = p.team==='A' ? '#ff4444' : '#4444ff';
+                ctx.beginPath(); ctx.arc(x, y, 6, 0, 2*Math.PI); ctx.fill();
+                ctx.strokeStyle = '#000'; ctx.lineWidth = 1; ctx.stroke();
+                ctx.fillStyle = '#fff'; ctx.font = '8px Arial'; ctx.textAlign = 'center';
+                ctx.fillText(p.id, x, y+3);
+                if(p.has_ball) {
+                    ctx.fillStyle = '#ffff00';
+                    ctx.beginPath(); ctx.arc(x, y, 3, 0, 2*Math.PI); ctx.fill();
+                }
+            });
+            const b = state.ball.pos;
+            ctx.fillStyle = '#000';
+            ctx.beginPath(); ctx.arc(b[0]*scaleX, b[1]*scaleY, 4, 0, 2*Math.PI); ctx.fill();
+            ctx.strokeStyle = '#fff'; ctx.stroke();
+
+            // Update the step counter display
+            totalSteps++;
+            infoDiv.innerText = `Steps: ${totalSteps} | Done: false`;
+        }
+
+        (async function loop() {
+            let data = await reset();
+            draw(data.state);
+            let episodeSteps = 0;
+            const maxSteps = 3000;
+            setInterval(async () => {
+                episodeSteps++;
+                let actions = {};
+                for(let i=0; i<22; i++) {
+                    actions[i] = "MOVE " + (Math.random()*2-1)*8 + " " + (Math.random()*2-1)*8;
+                }
+                let result = await step(actions);
+                if(result.done || episodeSteps >= maxSteps) {
+                    data = await reset();
+                    episodeSteps = 0;
+                    infoDiv.innerText = `Steps: ${totalSteps} | Reset`;
+                } else {
+                    draw(result.state);
+                }
+            }, 100);
+        })();
+    </script>
+</body>
+</html>

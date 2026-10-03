@@ -1,0 +1,7 @@
+numpy
+fastapi
+uvicorn
+pydantic
+matplotlib
+pillow
+openenv
